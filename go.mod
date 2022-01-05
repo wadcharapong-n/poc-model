@@ -1,9 +1,10 @@
-module github.com/wadcharapong-n/poc-model
+module poc-model
 
 go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.7
+	github.com/joho/godotenv v1.4.0
 	gorm.io/driver/mysql v1.2.2
 	gorm.io/gorm v1.22.4
 )

@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"gorm.io/gorm"
@@ -33,14 +33,12 @@ type User struct {
 	IsChef              bool             `gorm:"default:false" json:"isChef"`
 	CreatedAt           time.Time        `json:"createdAt,omitempty"`
 	UpdatedAt           time.Time        `gorm:"autoUpdateTime:milli" json:"updatedAt,omitempty"`
-	Allergies           *[]Ingredient `gorm:"polymorphic:Owner;polymorphicValue:master"`
+	Allergies           *[]Ingredient `gorm:"many2many:user_allergies;"`
 }
 
 type Ingredient struct {
 	ID       uint   `json:"id" gorm:"primaryKey"`
 	Name     string `json:"name,omitempty"`
-	OwnerID   int
-	OwnerType string
 	IsActive bool   `json:"isActive" gorm:"default:true"`
 }
 
@@ -52,4 +50,3 @@ type TimeAvailable struct {
 	Time      string         `gorm:"size(20),not null" json:"time"`
 	Sequence  int            `gorm:"not null" json:"-"`
 }
-
