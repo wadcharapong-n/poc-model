@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -29,7 +28,11 @@ func main() {
 	r.GET("/ping", ping)
 	r.GET("/user", addUser)
 	r.GET("/user2", addUser2)
-	r.GET("/all-user", getUser)
+	r.GET("/get-user", getUser)
+	r.GET("/user/:userID/chef", addChef)
+	r.GET("/chef", getChef)
+	r.GET("/:chefID/course", addCourse)
+	r.GET("/get-course", getCourse)
 	r.Run(":8080") // listen and serve on localhost:8080
 }
 
@@ -39,12 +42,13 @@ func ping(c *gin.Context) {
 
 func addUser(c *gin.Context) {
 	email := "abcd"
-	allergie1 := model.Ingredient{IsActive: true,Name: "egg"}
-	allergie2 := model.Ingredient{IsActive: true,Name: "meat"}
+	allergie1 := model.Ingredient{Name: "egg"}
+	allergie2 := model.Ingredient{Name: "meat"}
+	image := model.Image{ImageUrl: "image url test"}
 	var allergies []model.Ingredient
 	allergies = append(allergies, allergie1)
 	allergies = append(allergies, allergie2)
-	user := model.User{Email: &email, Allergies:  &allergies}
+	user := model.User{Email: &email, Allergies:  &allergies, ProfileImage: &image}
 	userService.AddUser(user)
 
 	c.JSON(200, "pong!!!!!!")
@@ -70,6 +74,46 @@ func addUser2(c *gin.Context) {
 	c.JSON(200, "pong!!!!!!")
 }
 
+func addChef(c *gin.Context) {
+	userID := c.Param("userID")
+	u64, _ := strconv.ParseUint(userID, 10, 32)
+	chef := model.Chef{Name: "Chef Test",UserID: uint(u64)}
+	userService.AddChef(chef)
+	c.JSON(200, "pong!!!!!!")
+}
+
+func getChef(c *gin.Context) {
+	chefId := c.Query("id")
+	u64, _ := strconv.ParseUint(chefId, 10, 32)
+	chef := userService.GetChef(uint(u64))
+
+	c.JSON(200, chef)
+}
+
+func addCourse(c *gin.Context) {
+	chefID := c.Param("chefID")
+	u64, _ := strconv.ParseUint(chefID, 10, 32)
+	image := model.Image{ImageUrl: "image url test course"}
+	menu1 := model.CourseMenu{Name: "menu1",Sequence: 1}
+	menu2 := model.CourseMenu{Name: "menu2",Sequence: 2}
+	menu3 := model.CourseMenu{Name: "menu3",Sequence: 3}
+	var menues []model.CourseMenu
+	menues = append(menues, menu1)
+	menues = append(menues, menu2)
+	menues = append(menues, menu3)
+	course := model.Course{Status: model.CourseStatus("PUBLISHED"),ChefID: uint(u64), CoverImage: &image, CourseMenus: &menues}
+	cour, _ := userService.AddCourse(course)
+	c.JSON(200, cour)
+}
+
+func getCourse(c *gin.Context) {
+	courseID := c.Query("id")
+	u64, _ := strconv.ParseUint(courseID, 10, 32)
+	course := userService.GetCourse(uint(u64))
+
+	c.JSON(200, course)
+}
+
 func getConfig() model.EnvConfig {
 	return model.EnvConfig{
 		Host: os.Getenv("HOST"),
@@ -92,35 +136,13 @@ func Initialize(config model.MySQLConfig) {
 	}
 	db.AutoMigrate(&model.Ingredient{})
 	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.Ingredient{})
+	db.AutoMigrate(&model.TypeOfCuisine{})
+	db.AutoMigrate(&model.Chef{}, &model.ChefLocation{})
+	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.Image{})
+	db.AutoMigrate(&model.Course{}, &model.CourseMenu{})
 
-	if err = db.AutoMigrate(&model.TimeAvailable{}); err == nil && db.Migrator().HasTable(&model.TimeAvailable{}) {
-		if err := db.First(&model.TimeAvailable{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			//Insert seed data
-			TimeAvailableF(db)
-		}
-	}
 
 	DB = db
-}
-
-func TimeAvailableF(db *gorm.DB) {
-	var times = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
-	creates := []model.TimeAvailable{}
-	for index, time := range times {
-		ID := (index * 2) + 1
-		t := model.TimeAvailable{
-			ID:       uint(ID),
-			Time:     strconv.Itoa(time) + ":00",
-			Sequence: ID,
-		}
-		creates = append(creates, t)
-		ID = (index * 2) + 2
-		t = model.TimeAvailable{
-			ID:       uint(ID),
-			Time:     strconv.Itoa(time) + ":30",
-			Sequence: ID,
-		}
-		creates = append(creates, t)
-	}
-	db.Create(&creates)
 }

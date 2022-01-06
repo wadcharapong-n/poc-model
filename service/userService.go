@@ -17,6 +17,10 @@ type UserService interface {
 	GetUser(userId uint) model.User
 	GetUserByEmailAndType(email string, userType string) (*model.User, error)
 	GetIngredientById(id uint) (*model.Ingredient, error)
+	AddChef(chefReq model.Chef) (*model.Chef, error)
+	GetChef(chefId uint) model.Chef
+	AddCourse(chefReq model.Course) (*model.Course, error)
+	GetCourse(chefId uint) model.Course
 }
 type userInformation struct {
 	DB *gorm.DB
@@ -101,4 +105,34 @@ func (u *userInformation) GetIngredientById(id uint) (*model.Ingredient, error) 
 	}
 
 	return &ingredient, nil
+}
+
+func (info *userInformation) AddChef(chefReq model.Chef) (*model.Chef, error) {
+	if err := info.DB.Save(&chefReq).Error; err != nil {
+		return &chefReq, err
+	}
+
+	return &chefReq, nil
+}
+
+func (u *userInformation) GetChef(chefId uint) model.Chef {
+	var chef = model.Chef{}
+	u.DB.Preload(clause.Associations).First(&chef,chefId)
+	fmt.Println(&chef)
+	return chef
+}
+
+func (info *userInformation) AddCourse(course model.Course) (*model.Course, error) {
+	if err := info.DB.Save(&course).Error; err != nil {
+		return &course, err
+	}
+
+	return &course, nil
+}
+
+func (u *userInformation) GetCourse(chefId uint) model.Course {
+	var course = model.Course{}
+	u.DB.Preload(clause.Associations).First(&course,chefId)
+	fmt.Println(&course)
+	return course
 }

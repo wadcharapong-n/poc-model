@@ -2,7 +2,6 @@ package model
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type EnvConfig struct {
@@ -18,35 +17,32 @@ type MySQLConfig struct {
 	Port     string
 	DbName   string
 }
-
+//case one to one  ->  ProfileImage
+//case many to many -> Allergies
 type User struct {
-	ID                  uint    `json:"id" gorm:"primaryKey"`
+	gorm.Model
 	Email               *string `json:"email,omitempty"`
 	Password            *string `json:"-"`
 	Firstname           *string `json:"firstName,omitempty"`
 	Lastname            *string `json:"lastName,omitempty"`
 	Label               *string `json:"label,omitempty"`
-	ProfileImageID      *uint   `json:"profileImageID,omitempty"`
+	ProfileImage      	*Image	`gorm:"foreignkey:UserId;references:ID"`
 	NumberOfVaccination *uint8           `json:"numberOfVaccination,omitempty"`
-	Type                *string          `json:"type,omitempty"`
-	IsActive            bool             `gorm:"default:true" json:"isActive"`
 	IsChef              bool             `gorm:"default:false" json:"isChef"`
-	CreatedAt           time.Time        `json:"createdAt,omitempty"`
-	UpdatedAt           time.Time        `gorm:"autoUpdateTime:milli" json:"updatedAt,omitempty"`
+	IsActive 			bool  `gorm:"default:false" json:"isActive"`
 	Allergies           *[]Ingredient `gorm:"many2many:user_allergies;"`
+	Chef		*Chef
 }
 
 type Ingredient struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
+	gorm.Model
 	Name     string `json:"name,omitempty"`
-	IsActive bool   `json:"isActive" gorm:"default:true"`
 }
 
-type TimeAvailable struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time      `gorm:"autoCreateTime" json:"-"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime:milli" json:"-"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Time      string         `gorm:"size(20),not null" json:"time"`
-	Sequence  int            `gorm:"not null" json:"-"`
+
+type Image struct {
+	gorm.Model
+	CourseID 		*uint
+	UserId			*uint
+	ImageUrl     	string     `gorm:"type:varchar(255) not null" json:"imageUrl"`
 }
